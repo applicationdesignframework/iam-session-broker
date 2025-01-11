@@ -1,4 +1,4 @@
--c components/iam_session_broker/runtime/requirements.txt
+-c service/api/app/requirements.txt
 -c requirements.txt
 bandit
 black

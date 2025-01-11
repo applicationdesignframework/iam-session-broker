@@ -40,7 +40,7 @@ vi package.json  # Update the "aws-cdk" package version
 Consider [AWS CDK CLI](https://docs.aws.amazon.com/cdk/v2/guide/versioning.html#cdk_toolkit_versioning) compatibility when upgrading AWS CDK library version.
 
 ```bash
-pip-compile --upgrade service/iam_session_broker/runtime/requirements.in
+pip-compile --upgrade service/api/app/requirements.in
 pip-compile --upgrade requirements.in
 pip-compile --upgrade requirements-dev.in
 ./scripts/install-deps.sh
@@ -48,10 +48,7 @@ pip-compile --upgrade requirements-dev.in
 ```
 ```bash
 # [Optional] Cleanup unused packages
-pip-sync \
-  service/iam_session_broker/runtime/requirements.txt \
-  requirements.txt \
-  requirements-dev.txt
+pip-sync service/api/app/requirements.txt requirements.txt requirements-dev.txt
 ```
 ## Deploy the service to sandbox environment
 The `IAMSessionBroker-Service-Sandbox` stack uses your default AWS account and region.
@@ -65,7 +62,8 @@ Example output:
  ✅  IAMSessionBroker-Service-Sandbox
 
 Outputs:
-IAMSessionBroker-Service-Sandbox.IAMSessionBroker-Endpoint = https://d0cfuu2ujg.execute-api.eu-west-1.amazonaws.com/
+IAMSessionBroker-Service-Sandbox.APIEndpoint = https://jcyr7ckk5e.execute-api.eu-west-1.amazonaws.com/
+IAMSessionBroker-Service-Sandbox.ServiceRoleName = IAMSessionBroker
 ```
 
 ## Test the service
@@ -98,12 +96,12 @@ _bucket="isb-${_account}-${_region}"
 
 _isb_endpoint=$(aws cloudformation describe-stacks \
   --stack-name IAMSessionBroker-Service-Sandbox \
-  --query 'Stacks[*].Outputs[?OutputKey==`IAMSessionBroker-Endpoint`].OutputValue' \
+  --query 'Stacks[*].Outputs[?OutputKey==`APIEndpoint`].OutputValue' \
   --output text)
   
 _isb_iam_role_name=$(aws cloudformation describe-stacks \
   --stack-name IAMSessionBroker-Service-Sandbox \
-  --query 'Stacks[*].Outputs[?OutputKey==`IAMSessionBroker-IAMRoleName`].OutputValue' \
+  --query 'Stacks[*].Outputs[?OutputKey==`ServiceRoleName`].OutputValue' \
   --output text)
 
 _app_service_role_name="AppService"
@@ -113,7 +111,7 @@ _jwt_claim_name="custom:tenant_id"
 ```
 
 ### Create app access role
-The inline policy grants access Amazon S3 objects and uses `TenantID` principal tag 
+The inline policy grants access to Amazon S3 objects and uses `TenantID` principal tag 
 to scope access per tenant.
 
 ```bash
@@ -157,8 +155,8 @@ aws iam put-role-policy \
 ```
 
 ### Create app service role
-The inline policy allows to call any API Gateway endpoint in the account and region, 
-including the IAM Session Broker API Gateway endpoint.
+The inline policy allows to call any Amazon API Gateway endpoint in the account and Region, 
+including the IAM Session Broker Amazon API Gateway endpoint.
 
 ```bash
 cat > app_service_role_trust_policy.json <<EOF

@@ -18,7 +18,7 @@ certifi==2024.12.14
     # via requests
 cffi==1.17.1
     # via
-    #   -c components/iam_session_broker/runtime/requirements.txt
+    #   -c service/api/app/requirements.txt
     #   cryptography
 charset-normalizer==3.4.1
     # via requests
@@ -33,7 +33,7 @@ coverage==7.6.10
     # via -r requirements-dev.in
 cryptography==44.0.0
     # via
-    #   -c components/iam_session_broker/runtime/requirements.txt
+    #   -c service/api/app/requirements.txt
     #   authlib
 dill==0.3.9
     # via pylint
@@ -94,7 +94,7 @@ pycodestyle==2.12.1
     # via flake8
 pycparser==2.22
     # via
-    #   -c components/iam_session_broker/runtime/requirements.txt
+    #   -c service/api/app/requirements.txt
     #   cffi
 pydantic==2.9.2
     # via
@@ -141,8 +141,8 @@ shellingham==1.5.4
     # via typer
 six==1.17.0
     # via
-    #   -c components/iam_session_broker/runtime/requirements.txt
     #   -c requirements.txt
+    #   -c service/api/app/requirements.txt
     #   mando
 stevedore==5.4.0
     # via bandit
@@ -158,8 +158,8 @@ typer==0.15.1
     # via safety
 typing-extensions==4.12.2
     # via
-    #   -c components/iam_session_broker/runtime/requirements.txt
     #   -c requirements.txt
+    #   -c service/api/app/requirements.txt
     #   astroid
     #   black
     #   mypy
@@ -172,7 +172,7 @@ typing-extensions==4.12.2
     #   typer
 urllib3==1.26.20
     # via
-    #   -c components/iam_session_broker/runtime/requirements.txt
+    #   -c service/api/app/requirements.txt
     #   requests
     #   safety
 xenon==0.9.3
