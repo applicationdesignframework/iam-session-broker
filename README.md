@@ -1,12 +1,12 @@
 # IAM Session Broker
 Returns scoped temporary security credentials for registered applications.
 
-![diagram](https://user-images.githubusercontent.com/4362270/230899247-a50077d8-470f-404d-859b-6cdf3bab0ef4.png)
+<img src="https://github.com/user-attachments/assets/9333c03a-98fc-4f72-a3e7-419e8c318e1c" width="50%">
+
 \* Diagram generated using https://github.com/pistazie/cdk-dia
 
 ## Create development environment
-See [Getting Started With the AWS CDK](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html)
-for additional details and prerequisites
+See [Getting Started With the AWS CDK](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) for additional details and prerequisites.
 
 ### Clone the code
 ```bash
