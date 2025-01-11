@@ -1,0 +1,12 @@
+-c components/iam_session_broker/runtime/requirements.txt
+-c requirements.txt
+bandit
+black
+coverage
+flake8
+isort
+mypy
+pylint
+radon
+safety
+xenon

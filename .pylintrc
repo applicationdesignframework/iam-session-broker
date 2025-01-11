@@ -1,0 +1,9 @@
+[MAIN]
+init-hook='import sys; sys.path.append("components/iam_session_broker/runtime")'
+
+[MESSAGES CONTROL]
+disable = C0111
+
+[format]
+# Setting high length to let black decide
+max-line-length = 120

@@ -1,0 +1,6 @@
+{
+  "app": "python main.py",
+  "context": {
+    "@aws-cdk/aws-iam:minimizePolicies": true
+  }
+}
