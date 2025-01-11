@@ -3,17 +3,15 @@ from typing import Any
 
 import jwt
 
-import access_metadata  # isort: skip
+import access_database
 
 
-def init_access_metadata_repository() -> access_metadata.AccessMetadataRepository:
-    dynamodb_database = access_metadata.DynamoDBDatabase(
+def init_access_repository() -> access_database.AccessRepository:
+    dynamodb_database = access_database.DynamoDBDatabase(
         os.environ["ISB_DYNAMODB_TABLE_NAME"]
     )
-    access_metadata_repository = access_metadata.AccessMetadataRepository(
-        database=dynamodb_database
-    )
-    return access_metadata_repository
+    access_repository = access_database.AccessRepository(database=dynamodb_database)
+    return access_repository
 
 
 def verify_jwt(jwt_: str, jwk_set_url: str) -> Any:
@@ -22,5 +20,4 @@ def verify_jwt(jwt_: str, jwk_set_url: str) -> Any:
     claims = jwt.decode(
         jwt_, signing_key.key, options={"verify_aud": False}, algorithms=["RS256"]
     )
-
     return claims

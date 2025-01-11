@@ -6,7 +6,7 @@ import boto3
 
 class DatabaseInterface(abc.ABC):
     @abc.abstractmethod
-    def register_application(
+    def register_application(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         application_name: str,
         access_role_name: str,
@@ -25,11 +25,11 @@ class DatabaseInterface(abc.ABC):
         pass
 
 
-class AccessMetadataRepository:
+class AccessRepository:
     def __init__(self, *, database: DatabaseInterface):
         self._database = database
 
-    def register_application(
+    def register_application(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         application_name: str,
         access_role_name: str,
@@ -59,7 +59,7 @@ class DynamoDBDatabase(DatabaseInterface):
         super().__init__()
         self._table = DynamoDBDatabase._dynamodb.Table(table_name)
 
-    def register_application(
+    def register_application(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         application_name: str,
         access_role_name: str,

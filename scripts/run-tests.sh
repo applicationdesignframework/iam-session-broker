@@ -18,16 +18,18 @@ flake8 --config .flake8 "${targets[@]}"
 isort --settings-path .isort.cfg --check --diff "${targets[@]}"
 
 # Static type checker (https://mypy.readthedocs.io)
-mypy --config-file .mypy.ini --explicit-package-bases "${targets[@]}"
+MYPYPATH="${PWD}" mypy --config-file .mypy.ini --exclude service/api/app "${targets[@]}"
+MYPYPATH="${PWD}/service/api/app" mypy --config-file .mypy.ini --explicit-package-bases service/api/app
 
 # Check for errors, enforce a coding standard, look for code smells (http://pylint.pycqa.org)
-pylint --rcfile .pylintrc "${targets[@]}"
-
-# Check dependencies for security issues (https://pyup.io/safety)
-safety check -r service/api/app/requirements.txt -r requirements.txt -r requirements-dev.txt
+PYTHONPATH="${PWD}" pylint --rcfile .pylintrc --ignore service/api/app "${targets[@]}"
+PYTHONPATH="${PWD}/service/api/app" pylint --rcfile .pylintrc service/api/app
 
 # Report code complexity (https://radon.readthedocs.io)
 radon mi "${targets[@]}"
+
+# Check dependencies for security issues (https://pyup.io/safety)
+safety check -r service/api/app/requirements.txt -r requirements.txt -r requirements-dev.txt
 
 # Exit with non-zero status if code complexity exceeds thresholds (https://xenon.readthedocs.io)
 xenon --max-absolute A --max-modules A --max-average A "${targets[@]}"

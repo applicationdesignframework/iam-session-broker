@@ -12,8 +12,7 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from mypy_boto3_sts import STSClient
 from mypy_boto3_sts.type_defs import AssumeRoleResponseTypeDef
 
-import helpers  # isort: skip
-
+import helpers
 
 app = APIGatewayHttpResolver()
 
@@ -27,16 +26,15 @@ def account_authorizer(
     """Authorizes applications from the same account.
 
     Related documentation:
-        https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html#context-variable-reference
+    https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html#context-variable-reference
     """
     application_account = event["requestContext"]["authorizer"]["iam"]["accountId"]
     current_account = event["requestContext"]["accountId"]
 
     if application_account != current_account:
         raise exceptions.UnauthorizedError("Cross-account access is not allowed")
-    else:
-        response = handler(event, context)
-        return response
+    response = handler(event, context)
+    return response
 
 
 @account_authorizer
@@ -48,12 +46,12 @@ def lambda_handler(event: dict[str, Any], context: LambdaContext) -> dict[str, A
 def register_application() -> Response:  # type: ignore
     application_name = _get_application_name()
 
-    access_metadata_repository = helpers.init_access_metadata_repository()
-    if access_metadata_repository.get_access_metadata(application_name) is not None:
+    access_repository = helpers.init_access_repository()
+    if access_repository.get_access_metadata(application_name) is not None:
         raise exceptions.BadRequestError(
             f"Application {application_name} already exists"
         )
-    access_metadata_repository.register_application(
+    access_repository.register_application(
         application_name,
         app.current_event.json_body["AccessRoleName"],
         app.current_event.json_body["SessionTagKey"],
@@ -68,10 +66,10 @@ def register_application() -> Response:  # type: ignore
 def delete_application() -> Response:  # type: ignore
     application_name = _get_application_name()
 
-    access_metadata_repository = helpers.init_access_metadata_repository()
-    if access_metadata_repository.get_access_metadata(application_name) is None:
+    access_repository = helpers.init_access_repository()
+    if access_repository.get_access_metadata(application_name) is None:
         raise exceptions.NotFoundError(f"Application {application_name} does not exist")
-    access_metadata_repository.delete_application(application_name)
+    access_repository.delete_application(application_name)
 
     return Response(status_code=HTTPStatus.OK)
 
@@ -118,8 +116,8 @@ def _get_application_name() -> str:
 
 
 def _get_access_metadata(application_name: str) -> dict[str, Any]:
-    access_metadata_repository = helpers.init_access_metadata_repository()
-    access_metadata = access_metadata_repository.get_access_metadata(application_name)
+    access_repository = helpers.init_access_repository()
+    access_metadata = access_repository.get_access_metadata(application_name)
     if access_metadata is None:
         raise exceptions.NotFoundError(f"Application {application_name} does not exist")
     return access_metadata
