@@ -1,7 +1,7 @@
 # IAM Session Broker
 Returns scoped temporary security credentials for registered applications.
 
-<img src="https://github.com/user-attachments/assets/9333c03a-98fc-4f72-a3e7-419e8c318e1c" width="50%">
+<img src="architecture.png" width="50%">
 
 \* Diagram generated using https://github.com/pistazie/cdk-dia
 
