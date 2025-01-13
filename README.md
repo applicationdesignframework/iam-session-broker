@@ -87,7 +87,7 @@ _other_tenant_id="Blue"
 
 _user_pool_id=$(aws cloudformation describe-stacks \
   --stack-name IdentityProvider-Service-Sandbox \
-  --query 'Stacks[*].Outputs[?OutputKey==`IdentityProvider-CognitoUserPoolID`].OutputValue' \
+  --query 'Stacks[*].Outputs[?OutputKey==`CognitoUserPoolID`].OutputValue' \
   --output text)
 
 _account=$(aws sts get-caller-identity --query Account --output text)
@@ -204,6 +204,8 @@ _app_service_role_credentials=$(aws sts assume-role \
 ```
 
 ### Register the app to IAM Session Broker
+**Note:** `${_isb_endpoint}applications` doesn't include `/` on purpose, because endpoint attribute already includes `/`. Adding `/` would result in access denied due to `//` in the API resource path.
+
 ```bash
 env \
     $(echo ${_app_service_role_credentials} | \
@@ -213,7 +215,7 @@ env \
             \"SessionTagKey\": \"${_session_tag_key}\", \
             \"JWTClaimName\": \"${_jwt_claim_name}\", \
             \"JWKSetURL\": \"https://cognito-idp.${_region}.amazonaws.com/${_user_pool_id}/.well-known/jwks.json\" \
-        }" "${_isb_endpoint}/applications"
+        }" "${_isb_endpoint}applications"
 ```
 
 ### Create bucket with objects for two tenants
@@ -224,11 +226,13 @@ aws s3api put-object --bucket ${_bucket} --key ${_other_tenant_id}/file.txt --co
 ```
 
 ### Get app access role credentials
+**Note:** `${_isb_endpoint}applications` doesn't include `/` on purpose, because endpoint attribute already includes `/`. Adding `/` would result in access denied due to `//` in the API resource path.
+
 ```bash
 env \
     $(echo ${_app_service_role_credentials} | \
     awk '{printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s",$1,$2,$3}') \
-        awscurl --region ${_region} -X GET "${_isb_endpoint}/credentials?jwt=${_user_jwt}" \
+        awscurl --region ${_region} -X GET "${_isb_endpoint}credentials?jwt=${_user_jwt}" \
             > app_access_role_credentials.json
 ```
 
@@ -254,11 +258,13 @@ env \
 ```
 
 ### Deregister application
+**Note:** `${_isb_endpoint}applications` doesn't include `/` on purpose, because endpoint attribute already includes `/`. Adding `/` would result in access denied due to `//` in the API resource path.
+
 ```bash
 env \
     $(echo ${_app_service_role_credentials} | \
     awk '{printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s",$1,$2,$3}') \
-        awscurl --region ${_region} -X DELETE "${_isb_endpoint}/applications"
+        awscurl --region ${_region} -X DELETE "${_isb_endpoint}applications"
 ```
 
 ### Delete bucket
