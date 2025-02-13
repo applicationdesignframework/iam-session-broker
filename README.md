@@ -25,15 +25,15 @@ source .venv/bin/activate
 pip install pip-tools==6.4.0
 pip install pip==21.3.1
 
-./scripts/install-deps.sh
-./scripts/run-tests.sh
+./toolchain/install-deps.sh
+./toolchain/run-tests.sh
 ```
 
 ### [Optional] Upgrade AWS CDK CLI version
 ```bash
 vi package.json  # Update the "aws-cdk" package version
-./scripts/install-deps.sh
-./scripts/run-tests.sh
+./toolchain/install-deps.sh
+./toolchain/run-tests.sh
 ```
 
 ### [Optional] Upgrade dependencies (ordered by constraints)
@@ -43,8 +43,8 @@ Consider [AWS CDK CLI](https://docs.aws.amazon.com/cdk/v2/guide/versioning.html#
 pip-compile --upgrade service/api/app/requirements.in
 pip-compile --upgrade requirements.in
 pip-compile --upgrade requirements-dev.in
-./scripts/install-deps.sh
-./scripts/run-tests.sh
+./toolchain/install-deps.sh
+./toolchain/run-tests.sh
 ```
 ```bash
 # [Optional] Cleanup unused packages

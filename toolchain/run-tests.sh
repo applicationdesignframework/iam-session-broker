@@ -12,18 +12,18 @@ bandit --recursive "${targets[@]}"
 black --check --diff "${targets[@]}"
 
 # Style guide enforcement (https://flake8.pycqa.org)
-flake8 --config .flake8 "${targets[@]}"
+flake8 --config toolchain/.flake8 "${targets[@]}"
 
 # Sort imports (https://pycqa.github.io/isort)
-isort --settings-path .isort.cfg --check --diff "${targets[@]}"
+isort --settings-path toolchain/.isort.cfg --check --diff "${targets[@]}"
 
 # Static type checker (https://mypy.readthedocs.io)
-MYPYPATH="${PWD}" mypy --config-file .mypy.ini --exclude service/api/app "${targets[@]}"
-MYPYPATH="${PWD}/service/api/app" mypy --config-file .mypy.ini --explicit-package-bases service/api/app
+MYPYPATH="${PWD}" mypy --config-file toolchain/.mypy.ini --exclude service/api/app "${targets[@]}"
+MYPYPATH="${PWD}/service/api/app" mypy --config-file toolchain/.mypy.ini --explicit-package-bases service/api/app
 
 # Check for errors, enforce a coding standard, look for code smells (http://pylint.pycqa.org)
-PYTHONPATH="${PWD}" pylint --rcfile .pylintrc --ignore service/api/app "${targets[@]}"
-PYTHONPATH="${PWD}/service/api/app" pylint --rcfile .pylintrc service/api/app
+PYTHONPATH="${PWD}" pylint --rcfile toolchain/.pylintrc --ignore service/api/app "${targets[@]}"
+PYTHONPATH="${PWD}/service/api/app" pylint --rcfile toolchain/.pylintrc service/api/app
 
 # Report code complexity (https://radon.readthedocs.io)
 radon mi "${targets[@]}"
