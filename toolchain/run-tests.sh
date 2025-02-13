@@ -15,7 +15,7 @@ black --check --diff "${targets[@]}"
 flake8 --config toolchain/.flake8 "${targets[@]}"
 
 # Sort imports (https://pycqa.github.io/isort)
-isort --settings-path toolchain/.isort.cfg --check --diff "${targets[@]}"
+isort --src . --src service/api/app --settings-path toolchain/.isort.cfg --check --diff "${targets[@]}"
 
 # Static type checker (https://mypy.readthedocs.io)
 MYPYPATH="${PWD}" mypy --config-file toolchain/.mypy.ini --exclude service/api/app "${targets[@]}"
