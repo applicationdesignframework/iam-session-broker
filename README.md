@@ -5,16 +5,13 @@ Returns scoped temporary security credentials for registered applications.
 
 \* Diagram generated using https://github.com/pistazie/cdk-dia
 
-## Create development environment
-See [Getting Started With the AWS CDK](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) for additional details and prerequisites.
-
-### Clone the code
+## Clone code
 ```bash
 git clone https://github.com/applicationdesignframework/iam-session-broker
 cd iam-session-broker
 ```
 
-### Create Python virtual environment and install the dependencies
+## Configure development environment
 ```bash
 python3.9 -m venv .venv
 source .venv/bin/activate
@@ -25,34 +22,42 @@ source .venv/bin/activate
 pip install pip-tools==6.4.0
 pip install pip==21.3.1
 
-toolchain/install-deps.sh
-toolchain/run-tests.sh
+toolchain/scripts/install-deps.sh
+toolchain/scripts/run-tests.sh
 ```
 
-### [Optional] Upgrade AWS CDK CLI version
+## [Optional] Upgrade AWS CDK CLI version
 The application uses Node Package Manager (npm) and `package.json` configuration file to install AWS CDK CLI locally. To find the latest AWS CDK CLI version: `npm view aws-cdk-lib version`.
 
 ```bash
 vi package.json  # Update the "aws-cdk" package version
-toolchain/install-deps.sh
-toolchain/run-tests.sh
 ```
 
-### [Optional] Upgrade dependencies (ordered by constraints)
+```bash
+toolchain/scripts/install-deps.sh
+toolchain/scripts/run-tests.sh
+```
+
+## [Optional] Upgrade dependencies (ordered by constraints)
 Consider [AWS CDK CLI](https://docs.aws.amazon.com/cdk/v2/guide/versioning.html#cdk_toolkit_versioning) compatibility when upgrading AWS CDK library version.
 
 ```bash
 pip-compile --upgrade service/api/app/requirements.in
 pip-compile --upgrade requirements.in
 pip-compile --upgrade requirements-dev.in
-toolchain/install-deps.sh
-toolchain/run-tests.sh
 ```
+
 ```bash
-# [Optional] Cleanup unused packages
+toolchain/scripts/install-deps.sh
+toolchain/scripts/run-tests.sh
+```
+
+## [Optional] Cleanup unused packages
+```bash
 pip-sync service/api/app/requirements.txt requirements.txt requirements-dev.txt
 ```
-## Deploy the service to sandbox environment
+
+## Deploy service stack
 The `IAMSessionBroker-Service-Sandbox` stack uses your default AWS account and region.
 
 ```bash
@@ -68,7 +73,7 @@ IAMSessionBroker-Service-Sandbox.APIEndpoint = https://jcyr7ckk5e.execute-api.eu
 IAMSessionBroker-Service-Sandbox.ServiceRoleName = IAMSessionBroker
 ```
 
-## Test the service
+## Test service
 ### Install awscurl
 https://github.com/okigan/awscurl
 
@@ -297,7 +302,7 @@ rm app_service_role_trust_policy.json
 rm Yellow-file.txt
 ```
 
-## Delete the service
+## Delete service stack
 **Do not forget to delete the stack to avoid unexpected charges**
 ```bash
 npx cdk destroy IAMSessionBroker-Service-Sandbox
