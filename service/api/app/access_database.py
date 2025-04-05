@@ -9,7 +9,7 @@ class DatabaseInterface(abc.ABC):
     def register_application(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         application_name: str,
-        access_role_name: str,
+        access_principal_role_name: str,
         session_tag_key: str,
         jwt_claim_name: str,
         jwk_set_url: str,
@@ -32,14 +32,14 @@ class AccessRepository:
     def register_application(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         application_name: str,
-        access_role_name: str,
+        access_principal_role_name: str,
         session_tag_key: str,
         jwt_claim_name: str,
         jwk_set_url: str,
     ) -> None:
         self._database.register_application(
             application_name,
-            access_role_name,
+            access_principal_role_name,
             session_tag_key,
             jwt_claim_name,
             jwk_set_url,
@@ -62,14 +62,14 @@ class DynamoDBDatabase(DatabaseInterface):
     def register_application(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         application_name: str,
-        access_role_name: str,
+        access_principal_role_name: str,
         session_tag_key: str,
         jwt_claim_name: str,
         jwk_set_url: str,
     ) -> None:
         access_metadata = {
             "ApplicationName": application_name,
-            "AccessRoleName": access_role_name,
+            "AccessPrincipalRoleName": access_principal_role_name,
             "SessionTagKey": session_tag_key,
             "JWTClaimName": jwt_claim_name,
             "JWKSetURL": jwk_set_url,

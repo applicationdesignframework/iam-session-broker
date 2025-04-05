@@ -70,7 +70,7 @@ Example output:
 
 Outputs:
 IAMSessionBroker-Service-Sandbox.APIEndpoint = https://jcyr7ckk5e.execute-api.eu-west-1.amazonaws.com/
-IAMSessionBroker-Service-Sandbox.ServiceRoleName = IAMSessionBroker
+IAMSessionBroker-Service-Sandbox.ServicePrincipalRoleName = IAMSessionBroker
 ```
 
 ## Test service
@@ -101,35 +101,35 @@ _account=$(aws sts get-caller-identity --query Account --output text)
 _region=$(aws configure get region)
 _bucket="isb-${_account}-${_region}"
 
-_isb_endpoint=$(aws cloudformation describe-stacks \
+_isb_service_api_endpoint=$(aws cloudformation describe-stacks \
   --stack-name IAMSessionBroker-Service-Sandbox \
   --query 'Stacks[*].Outputs[?OutputKey==`APIEndpoint`].OutputValue' \
   --output text)
   
-_isb_iam_role_name=$(aws cloudformation describe-stacks \
+_isb_service_principal_role_name=$(aws cloudformation describe-stacks \
   --stack-name IAMSessionBroker-Service-Sandbox \
-  --query 'Stacks[*].Outputs[?OutputKey==`ServiceRoleName`].OutputValue' \
+  --query 'Stacks[*].Outputs[?OutputKey==`ServicePrincipalRoleName`].OutputValue' \
   --output text)
 
-_app_service_role_name="AppService"
-_app_access_role_name="AppAccess"
+_app_service_principal_role_name="AppService"
+_app_access_principal_role_name="AppAccess"
 _session_tag_key="TenantID"
 _jwt_claim_name="custom:tenant_id"
 ```
 
-### Create app access role
+### Create application access principal role
 The inline policy grants access to Amazon S3 objects and uses `TenantID` principal tag 
-to scope access per tenant.
+to enforce tenant boundary.
 
 ```bash
-cat > app_access_role_trust_policy.json <<EOF
+cat > app_access_principal_role_trust_policy.json <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
       "Principal": {
-         "AWS": "arn:aws:iam::${_account}:role/${_isb_iam_role_name}"
+         "AWS": "arn:aws:iam::${_account}:role/${_isb_service_principal_role_name}"
       },
       "Action": [
          "sts:AssumeRole",
@@ -139,7 +139,7 @@ cat > app_access_role_trust_policy.json <<EOF
   ]
 }
 EOF
-cat > app_access_role_inline_policy.json <<EOF
+cat > app_access_principal_role_inline_policy.json <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -153,20 +153,20 @@ cat > app_access_role_inline_policy.json <<EOF
 }
 EOF
 aws iam create-role \
-    --role-name ${_app_access_role_name} \
-    --assume-role-policy-document file://app_access_role_trust_policy.json
+    --role-name ${_app_access_principal_role_name} \
+    --assume-role-policy-document file://app_access_principal_role_trust_policy.json
 aws iam put-role-policy \
-    --role-name ${_app_access_role_name} \
-    --policy-name ${_app_access_role_name} \
-    --policy-document file://app_access_role_inline_policy.json
+    --role-name ${_app_access_principal_role_name} \
+    --policy-name ${_app_access_principal_role_name} \
+    --policy-document file://app_access_principal_role_inline_policy.json
 ```
 
-### Create app service role
+### Create application service principal role
 The inline policy allows to call any Amazon API Gateway endpoint in the account and Region, 
-including the IAM Session Broker Amazon API Gateway endpoint.
+including the IAM Session Broker service API endpoint which uses Amazon API Gateway.
 
 ```bash
-cat > app_service_role_trust_policy.json <<EOF
+cat > app_service_principal_role_trust_policy.json <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -180,7 +180,7 @@ cat > app_service_role_trust_policy.json <<EOF
     ]
 }
 EOF
-cat > app_service_role_inline_policy.json <<EOF
+cat > app_service_principal_role_inline_policy.json <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -193,54 +193,54 @@ cat > app_service_role_inline_policy.json <<EOF
 }
 EOF
 aws iam create-role \
-    --role-name ${_app_service_role_name} \
-    --assume-role-policy-document file://app_service_role_trust_policy.json
+    --role-name ${_app_service_principal_role_name} \
+    --assume-role-policy-document file://app_service_principal_role_trust_policy.json
 aws iam put-role-policy \
-    --role-name ${_app_service_role_name} \
-    --policy-name ${_app_service_role_name} \
-    --policy-document file://app_service_role_inline_policy.json
+    --role-name ${_app_service_principal_role_name} \
+    --policy-name ${_app_service_principal_role_name} \
+    --policy-document file://app_service_principal_role_inline_policy.json
 ```
 
-### Get app service role credentials
+### Get application service principal role credentials
 ```bash
-_app_service_role_credentials=$(aws sts assume-role \
-    --role-arn arn:aws:iam::${_account}:role/${_app_service_role_name} \
-    --role-session-name ${_app_service_role_name} \
+_app_service_principal_role_credentials=$(aws sts assume-role \
+    --role-arn arn:aws:iam::${_account}:role/${_app_service_principal_role_name} \
+    --role-session-name ${_app_service_principal_role_name} \
     --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
     --output text)
 ```
 
-### Register the app to IAM Session Broker
-**Note:** `${_isb_endpoint}applications` doesn't include `/` on purpose, because endpoint attribute already includes `/`. Adding `/` would result in access denied due to `//` in the API resource path.
+### Register the application with IAM Session Broker
+**Note:** `${_isb_service_api_endpoint}applications` doesn't include `/` on purpose, because endpoint attribute already includes `/`. Adding `/` would result in access denied due to `//` in the API resource path.
 
 ```bash
 env \
-    $(echo ${_app_service_role_credentials} | \
+    $(echo ${_app_service_principal_role_credentials} | \
     awk '{printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s",$1,$2,$3}') \
         awscurl --region ${_region} -X POST -d "{ \
-            \"AccessRoleName\": \"${_app_access_role_name}\", \
+            \"AccessPrincipalRoleName\": \"${_app_access_principal_role_name}\", \
             \"SessionTagKey\": \"${_session_tag_key}\", \
             \"JWTClaimName\": \"${_jwt_claim_name}\", \
             \"JWKSetURL\": \"https://cognito-idp.${_region}.amazonaws.com/${_user_pool_id}/.well-known/jwks.json\" \
-        }" "${_isb_endpoint}applications"
+        }" "${_isb_service_api_endpoint}applications"
 ```
 
-### Create bucket with objects for two tenants
+### Create application bucket with objects for two tenants
 ```bash
 aws s3 mb s3://${_bucket}
 aws s3api put-object --bucket ${_bucket} --key ${_user_tenant_id}/file.txt --content-length 0
 aws s3api put-object --bucket ${_bucket} --key ${_other_tenant_id}/file.txt --content-length 0
 ```
 
-### Get app access role credentials
-**Note:** `${_isb_endpoint}applications` doesn't include `/` on purpose, because endpoint attribute already includes `/`. Adding `/` would result in access denied due to `//` in the API resource path.
+### Get application access principal role credentials
+**Note:** `${_isb_service_api_endpoint}applications` doesn't include `/` on purpose, because endpoint attribute already includes `/`. Adding `/` would result in access denied due to `//` in the API resource path.
 
 ```bash
 env \
-    $(echo ${_app_service_role_credentials} | \
+    $(echo ${_app_service_principal_role_credentials} | \
     awk '{printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s",$1,$2,$3}') \
-        awscurl --region ${_region} -X GET "${_isb_endpoint}credentials?jwt=${_user_jwt}" \
-            > app_access_role_credentials.json
+        awscurl --region ${_region} -X GET "${_isb_service_api_endpoint}credentials?jwt=${_user_jwt}" \
+            > app_access_principal_role_credentials.json
 ```
 
 ### Test access
@@ -248,9 +248,9 @@ You should have access to "Yellow" prefix per app access role policy.
 
 ```bash
 env \
-    AWS_ACCESS_KEY_ID=$(cat app_access_role_credentials.json | jq -r .AccessKeyId) \
-    AWS_SECRET_ACCESS_KEY=$(cat app_access_role_credentials.json | jq -r .SecretAccessKey) \
-    AWS_SESSION_TOKEN=$(cat app_access_role_credentials.json | jq -r .SessionToken) \
+    AWS_ACCESS_KEY_ID=$(cat app_access_principal_role_credentials.json | jq -r .AccessKeyId) \
+    AWS_SECRET_ACCESS_KEY=$(cat app_access_principal_role_credentials.json | jq -r .SecretAccessKey) \
+    AWS_SESSION_TOKEN=$(cat app_access_principal_role_credentials.json | jq -r .SessionToken) \
         aws s3api get-object --bucket ${_bucket} --key ${_user_tenant_id}/file.txt ${_user_tenant_id}-file.txt
 ```
 
@@ -258,20 +258,20 @@ You should get "Access Denied" to "Blue" prefix per app access role policy.
 
 ```bash
 env \
-    AWS_ACCESS_KEY_ID=$(cat app_access_role_credentials.json | jq -r .AccessKeyId) \
-    AWS_SECRET_ACCESS_KEY=$(cat app_access_role_credentials.json | jq -r .SecretAccessKey) \
-    AWS_SESSION_TOKEN=$(cat app_access_role_credentials.json | jq -r .SessionToken) \
+    AWS_ACCESS_KEY_ID=$(cat app_access_principal_role_credentials.json | jq -r .AccessKeyId) \
+    AWS_SECRET_ACCESS_KEY=$(cat app_access_principal_role_credentials.json | jq -r .SecretAccessKey) \
+    AWS_SESSION_TOKEN=$(cat app_access_principal_role_credentials.json | jq -r .SessionToken) \
         aws s3api get-object --bucket ${_bucket} --key ${_other_tenant_id}/file.txt ${_other_tenant_id}-file.txt
 ```
 
 ### Deregister application
-**Note:** `${_isb_endpoint}applications` doesn't include `/` on purpose, because endpoint attribute already includes `/`. Adding `/` would result in access denied due to `//` in the API resource path.
+**Note:** `${_isb_service_api_endpoint}applications` doesn't include `/` on purpose, because endpoint attribute already includes `/`. Adding `/` would result in access denied due to `//` in the API resource path.
 
 ```bash
 env \
-    $(echo ${_app_service_role_credentials} | \
+    $(echo ${_app_service_principal_role_credentials} | \
     awk '{printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s",$1,$2,$3}') \
-        awscurl --region ${_region} -X DELETE "${_isb_endpoint}applications"
+        awscurl --region ${_region} -X DELETE "${_isb_service_api_endpoint}applications"
 ```
 
 ### Delete bucket
@@ -283,22 +283,22 @@ aws s3 rb s3://${_bucket}
 ### Delete roles
 ```bash
 aws iam delete-role-policy \
-    --role-name ${_app_access_role_name} \
-    --policy-name ${_app_access_role_name}
-aws iam delete-role --role-name ${_app_access_role_name}
+    --role-name ${_app_access_principal_role_name} \
+    --policy-name ${_app_access_principal_role_name}
+aws iam delete-role --role-name ${_app_access_principal_role_name}
 aws iam delete-role-policy \
-    --role-name ${_app_service_role_name} \
-    --policy-name ${_app_service_role_name}
-aws iam delete-role --role-name ${_app_service_role_name}
+    --role-name ${_app_service_principal_role_name} \
+    --policy-name ${_app_service_principal_role_name}
+aws iam delete-role --role-name ${_app_service_principal_role_name}
 ```
 
 ### Delete temporary files
 ```bash
-rm app_access_role_credentials.json
-rm app_access_role_inline_policy.json
-rm app_access_role_trust_policy.json
-rm app_service_role_inline_policy.json
-rm app_service_role_trust_policy.json
+rm app_service_principal_role_trust_policy.json
+rm app_service_principal_role_inline_policy.json
+rm app_access_principal_role_trust_policy.json
+rm app_access_principal_role_inline_policy.json
+rm app_access_principal_role_credentials.json
 rm Yellow-file.txt
 ```
 

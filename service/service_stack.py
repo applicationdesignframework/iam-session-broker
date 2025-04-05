@@ -7,7 +7,7 @@ from constructs import Construct
 from service.access_database import AccessDatabase
 from service.api.compute import Compute as APICompute
 from service.api_gateway import APIGateway
-from service.service_role import ServiceRole
+from service.service_principal import ServicePrincipal
 
 
 class ServiceStack(cdk.Stack):
@@ -18,15 +18,17 @@ class ServiceStack(cdk.Stack):
         api_compute = APICompute(
             self,
             "APICompute",
-            dynamodb_table_name=access_database.dynamodb_table.table_name,
+            access_database_dynamodb_table_name=access_database.dynamodb_table.table_name,
         )
         api_gateway = APIGateway(
             self, "APIGateway", lambda_function=api_compute.lambda_function
         )
-        service_role = ServiceRole(
+        service_principal = ServicePrincipal(
             self,
-            "ServiceRole",
-            lambda_function_role=cast(iam.IRole, api_compute.lambda_function.role),
+            "ServicePrincipal",
+            api_compute_lambda_function_role=cast(
+                iam.IRole, api_compute.lambda_function.role
+            ),
         )
 
         access_database.dynamodb_table.grant_read_write_data(
@@ -36,7 +38,9 @@ class ServiceStack(cdk.Stack):
         # API Gateway HTTP API create_default_stage configuration is enabled,
         # hence `url` attribute will have a defined value.
         api_endpoint = api_gateway.api_gateway_http_api.url
-        service_role_name = service_role.iam_role.role_name
+        service_principal_role_name = service_principal.iam_role.role_name
 
         cdk.CfnOutput(self, "APIEndpoint", value=cast(str, api_endpoint))
-        cdk.CfnOutput(self, "ServiceRoleName", value=service_role_name)
+        cdk.CfnOutput(
+            self, "ServicePrincipalRoleName", value=service_principal_role_name
+        )

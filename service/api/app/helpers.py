@@ -8,7 +8,7 @@ import access_database
 
 def init_access_repository() -> access_database.AccessRepository:
     dynamodb_database = access_database.DynamoDBDatabase(
-        os.environ["ISB_DYNAMODB_TABLE_NAME"]
+        os.environ["ISB_ACCESS_DATABASE_DYNAMODB_TABLE_NAME"]
     )
     access_repository = access_database.AccessRepository(database=dynamodb_database)
     return access_repository

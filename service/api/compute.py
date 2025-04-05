@@ -14,7 +14,7 @@ class Compute(Construct):
         scope: Construct,
         id_: str,
         *,
-        dynamodb_table_name: str,
+        access_database_dynamodb_table_name: str,
     ):
         super().__init__(scope, id_)
 
@@ -24,8 +24,8 @@ class Compute(Construct):
             runtime=lambda_.Runtime.PYTHON_3_9,
             environment={
                 # Passing role name because the role is created after the function.
-                "ISB_IAM_ROLE_NAME": constants.APP_NAME,
-                "ISB_DYNAMODB_TABLE_NAME": dynamodb_table_name,
+                "ISB_SERVICE_PRINCIPAL_IAM_ROLE_NAME": constants.APP_NAME,
+                "ISB_ACCESS_DATABASE_DYNAMODB_TABLE_NAME": access_database_dynamodb_table_name,
             },
             entry=str(pathlib.Path(__file__).parent.joinpath("app").resolve()),
             index="main.py",
